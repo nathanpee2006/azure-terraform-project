@@ -1,0 +1,23 @@
+# Local .terraform directories (contains downloaded provider plugins)
+.terraform/
+
+# Local state files (may contain sensitive data/secrets)
+*.tfstate
+*.tfstate.*
+
+# Transient lock info files created during applies
+.terraform.tfstate.lock.info
+
+# Crash logs
+crash.log
+crash.*.log
+
+# Local variable files (frequently contain secrets or environment-specific values)
+*.tfvars
+*.tfvars.json
+
+# Local override files
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
