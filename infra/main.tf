@@ -30,14 +30,36 @@ resource "azurerm_virtual_network" "vnet" {
   resource_group_name = azurerm_resource_group.resource_group.name
   address_space       = ["10.0.0.0/20"]
 
-  # Subnet
-  subnet {
-    name             = "subnet-terraform-vm"
-    address_prefixes = ["10.0.1.0/24"]
-  }
-
   tags = {
     environment = "Production"
+  }
+}
+
+# Subnet 
+resource "azurerm_subnet" "subnet" {
+  name                 = "subnet-terraform-vm"
+  resource_group_name  = azurerm_resource_group.resource_group.name
+  virtual_network_name = azurerm_virtual_network.vnet.name
+  address_prefixes     = ["10.0.1.0/24"]
+}
+
+# Associate NSG with Subnet
+resource "azurerm_subnet_network_security_group_association" "subnet_nsg" {
+  subnet_id                 = azurerm_subnet.subnet.id
+  network_security_group_id = azurerm_network_security_group.nsg.id
+}
+
+# Network Interface
+resource "azurerm_network_interface" "nic" {
+  name                = "nic-terraform-vm"
+  location            = azurerm_resource_group.resource_group.location
+  resource_group_name = azurerm_resource_group.resource_group.name
+
+  ip_configuration {
+    name                          = "ipconfig1"
+    subnet_id                     = azurerm_subnet.subnet.id
+    private_ip_address_allocation = "Dynamic"
+    public_ip_address_id          = azurerm_public_ip.public_ip.id
   }
 }
 
@@ -49,3 +71,29 @@ resource "azurerm_public_ip" "public_ip" {
   allocation_method   = "Static"
 }
 
+# Virtual Machine
+resource "azurerm_linux_virtual_machine" "vm" {
+  name                  = "vm-terraform"
+  resource_group_name   = azurerm_resource_group.resource_group.name
+  location              = azurerm_resource_group.resource_group.location
+  size                  = "Standard_D2als_v6"
+  admin_username        = var.admin_username
+  network_interface_ids = [azurerm_network_interface.nic.id]
+
+  admin_ssh_key {
+    username   = var.admin_username
+    public_key = file("~/.ssh/id_rsa.pub")
+  }
+
+  source_image_reference {
+    publisher = "Canonical"
+    offer     = "ubuntu-24_04-lts"
+    sku       = "server"
+    version   = "latest"
+  }
+
+  os_disk {
+    caching              = "ReadWrite"
+    storage_account_type = "Standard_LRS"
+  }
+}
