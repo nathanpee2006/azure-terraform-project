@@ -1,7 +1,7 @@
 # Resource Group
 resource "azurerm_resource_group" "resource_group" {
-  name     = "rg-terraform-vm"
-  location = "newzealandnorth"
+  name     = var.resource_group_name
+  location = var.location
 }
 
 # Network Security Group
@@ -28,10 +28,10 @@ resource "azurerm_virtual_network" "vnet" {
   name                = "vnet-terraform-vm"
   location            = azurerm_resource_group.resource_group.location
   resource_group_name = azurerm_resource_group.resource_group.name
-  address_space       = ["10.0.0.0/20"]
+  address_space       = var.vnet_address_space
 
   tags = {
-    environment = "Production"
+    environment = var.environment
   }
 }
 
@@ -40,7 +40,7 @@ resource "azurerm_subnet" "subnet" {
   name                 = "subnet-terraform-vm"
   resource_group_name  = azurerm_resource_group.resource_group.name
   virtual_network_name = azurerm_virtual_network.vnet.name
-  address_prefixes     = ["10.0.1.0/24"]
+  address_prefixes     = var.subnet_address_prefixes
 }
 
 # Associate NSG with Subnet
@@ -76,7 +76,7 @@ resource "azurerm_linux_virtual_machine" "vm" {
   name                  = "vm-terraform"
   resource_group_name   = azurerm_resource_group.resource_group.name
   location              = azurerm_resource_group.resource_group.location
-  size                  = "Standard_D2als_v6"
+  size                  = var.vm_size
   admin_username        = var.admin_username
   network_interface_ids = [azurerm_network_interface.nic.id]
 
